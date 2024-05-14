@@ -1,25 +1,25 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class GameManager : MonoBehaviour
 {
     public static bool gameOver = false;
-
     public static bool winCondition = false;
-
     public static int actualPlayer = 0;
 
-    public List<Controller_Target> targets;
+    public GameObject player1Prefab; // Prefab del jugador 1
+    public GameObject player2Prefab; // Prefab del jugador 2
+    public Controller_Target target1;
+    public Controller_Target target2;
 
-    public List<Controller_Player> players;
+    private Controller_Player player1;
+    private Controller_Player player2;
 
     void Start()
     {
         Physics.gravity = new Vector3(0, -30, 0);
         gameOver = false;
         winCondition = false;
+        SpawnPlayers();
         SetConstraits();
     }
 
@@ -27,21 +27,11 @@ public class GameManager : MonoBehaviour
     {
         GetInput();
         CheckWin();
-
     }
 
     private void CheckWin()
     {
-        int i = 0;
-        foreach(Controller_Target t in targets)
-        {
-            if (t.playerOnTarget)
-            {
-                i++;
-                //Debug.Log(i.ToString());
-            }
-        }
-        if (i >= 7)
+        if (target1.playerOnTarget && target2.playerOnTarget)
         {
             winCondition = true;
         }
@@ -51,44 +41,50 @@ public class GameManager : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.Q))
         {
-            if (actualPlayer <= 0)
-            {
-                actualPlayer = 6;
-                SetConstraits();
-            }
-            else
-            {
-                actualPlayer--;
-                SetConstraits();
-            }
+            actualPlayer = actualPlayer == 1 ? 0 : 1;
+            SetConstraits();
         }
         if (Input.GetKeyDown(KeyCode.E))
         {
-            if (actualPlayer >= 6)
-            {
-                actualPlayer = 0;
-                SetConstraits();
-            }
-            else
-            {
-                actualPlayer++;
-                SetConstraits();
-            }
+            actualPlayer = actualPlayer == 0 ? 1 : 0;
+            SetConstraits();
+        }
+    }
+
+    public void PlayerReachedTarget(int playerNumber)
+    {
+        if (playerNumber == 1)
+        {
+            target1.playerOnTarget = true;
+        }
+        else if (playerNumber == 2)
+        {
+            target2.playerOnTarget = true;
         }
     }
 
     private void SetConstraits()
     {
-        foreach(Controller_Player p in players)
+        if (actualPlayer == 0)
         {
-            if (p == players[actualPlayer])
-            {
-                p.rb.constraints = RigidbodyConstraints.FreezePositionZ | RigidbodyConstraints.FreezeRotation;
-            }
-            else
-            {
-                p.rb.constraints = RigidbodyConstraints.FreezePositionX | RigidbodyConstraints.FreezePositionZ | RigidbodyConstraints.FreezeRotation;
-            }
+            player1.rb.constraints = RigidbodyConstraints.FreezePositionZ | RigidbodyConstraints.FreezeRotation;
+            player2.rb.constraints = RigidbodyConstraints.FreezePositionX | RigidbodyConstraints.FreezePositionZ | RigidbodyConstraints.FreezeRotation;
         }
+        else
+        {
+            player2.rb.constraints = RigidbodyConstraints.FreezePositionZ | RigidbodyConstraints.FreezeRotation;
+            player1.rb.constraints = RigidbodyConstraints.FreezePositionX | RigidbodyConstraints.FreezePositionZ | RigidbodyConstraints.FreezeRotation;
+        }
+    }
+
+    private void SpawnPlayers()
+    {
+        // Spawn del jugador 1
+        GameObject player1GO = Instantiate(player1Prefab, Vector3.zero, Quaternion.identity);
+        player1 = player1GO.GetComponent<Controller_Player>();
+
+        // Spawn del jugador 2
+        GameObject player2GO = Instantiate(player2Prefab, Vector3.zero, Quaternion.identity);
+        player2 = player2GO.GetComponent<Controller_Player>();
     }
 }
